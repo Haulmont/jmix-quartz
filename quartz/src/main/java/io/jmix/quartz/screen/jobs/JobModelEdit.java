@@ -6,11 +6,12 @@ import io.jmix.quartz.model.JobModel;
 import io.jmix.quartz.model.TriggerModel;
 import io.jmix.quartz.service.QuartzDataProvider;
 import io.jmix.quartz.service.QuartzService;
+import io.jmix.quartz.util.QuartzUtils;
 import io.jmix.ui.action.Action;
 import io.jmix.ui.component.ComboBox;
+import io.jmix.ui.component.TextField;
 import io.jmix.ui.model.CollectionContainer;
 import io.jmix.ui.screen.*;
-import io.jmix.quartz.util.QuartzUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -31,6 +32,8 @@ public class JobModelEdit extends StandardEditor<JobModel> {
     @Autowired
     private CollectionContainer<TriggerModel> triggerModelDc;
     @Autowired
+    private TextField<String> jobNameField;
+    @Autowired
     private ComboBox<String> jobGroupField;
     @Autowired
     private ComboBox<String> jobClassField;
@@ -38,7 +41,7 @@ public class JobModelEdit extends StandardEditor<JobModel> {
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
         //allow editing only not active job
-        setReadOnly(getEditedEntity().getIsActive());
+        setReadOnly(getEditedEntity().getIsActive() != null && getEditedEntity().getIsActive());
 
         List<String> jobGroupNames = quartzDataProvider.getJobGroupNames();
         jobGroupField.setOptionsList(jobGroupNames);
@@ -50,7 +53,15 @@ public class JobModelEdit extends StandardEditor<JobModel> {
             }
         });
 
-        jobClassField.setOptionsList(quartzUtils.getExistedJobsClassNames());
+        List<String> existedJobsClassNames = quartzUtils.getQuartzJobClassNames();
+        jobClassField.setOptionsList(existedJobsClassNames);
+        String jobClass = getEditedEntity().getJobClass();
+        //name, group and class for internal Jmix job should not be editable
+        if (!Strings.isNullOrEmpty(jobClass) && !existedJobsClassNames.contains(jobClass)) {
+            jobNameField.setEditable(false);
+            jobGroupField.setEditable(false);
+            jobClassField.setEditable(false);
+        }
 
         String jobName = getEditedEntity().getJobName();
         String jobGroup = getEditedEntity().getJobGroup();

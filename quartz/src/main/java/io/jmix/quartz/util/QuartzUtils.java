@@ -2,6 +2,7 @@ package io.jmix.quartz.util;
 
 import io.jmix.core.impl.scanning.ClasspathScanCandidateDetector;
 import io.jmix.core.impl.scanning.JmixModulesClasspathScanner;
+import org.apache.commons.collections4.CollectionUtils;
 import org.quartz.Job;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.type.classreading.MetadataReader;
@@ -17,8 +18,17 @@ public class QuartzUtils {
     @Autowired
     private JmixModulesClasspathScanner classpathScanner;
 
-    public List<String> getExistedJobsClassNames() {
-        return new ArrayList<>(classpathScanner.getClassNames(QuartzJobDetector.class));
+    private List<String> quartzJobClassNames;
+
+    /**
+     * Returns names of classes implementing {@code org.quartz.Job} interface
+     */
+    public List<String> getQuartzJobClassNames() {
+        if (CollectionUtils.isEmpty(quartzJobClassNames)) {
+            quartzJobClassNames = new ArrayList<>(classpathScanner.getClassNames(QuartzJobDetector.class));
+        }
+
+        return quartzJobClassNames;
     }
 
     @Component("quartz_QuartzJobDetector")

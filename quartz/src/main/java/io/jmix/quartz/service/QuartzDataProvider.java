@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Provides information from the Quartz engine.
+ */
 @Component("quartz_QuartzDataProvider")
 public class QuartzDataProvider {
 
@@ -24,9 +27,13 @@ public class QuartzDataProvider {
 
     @Autowired
     private Scheduler scheduler;
+
     @Autowired
     private UnconstrainedDataManager dataManager;
 
+    /**
+     * Provides information about all configured quartz jobs with related triggers
+     */
     public List<JobModel> getAllJobs() {
         List<JobModel> result = new ArrayList<>();
 
@@ -48,11 +55,16 @@ public class QuartzDataProvider {
                     Date nextFireTime = null;
                     boolean isActive = false;
                     for (Trigger jobTrigger : jobTriggers) {
-                        if (previousFireTime == null || previousFireTime.before(jobTrigger.getPreviousFireTime())) {
-                            previousFireTime = jobTrigger.getPreviousFireTime();
+                        Date triggerPreviousFireTime = jobTrigger.getPreviousFireTime();
+                        if (previousFireTime == null
+                                || (triggerPreviousFireTime != null && previousFireTime.before(triggerPreviousFireTime))) {
+                            previousFireTime = triggerPreviousFireTime;
                         }
-                        if (nextFireTime == null || nextFireTime.after(jobTrigger.getNextFireTime())) {
-                            nextFireTime = jobTrigger.getNextFireTime();
+
+                        Date triggerNextFireTime = jobTrigger.getNextFireTime();
+                        if (nextFireTime == null
+                                || (triggerNextFireTime != null && nextFireTime.after(triggerNextFireTime))) {
+                            nextFireTime = triggerNextFireTime;
                         }
 
                         Trigger.TriggerState triggerState = scheduler.getTriggerState(jobTrigger.getKey());
@@ -75,6 +87,13 @@ public class QuartzDataProvider {
         return result;
     }
 
+    /**
+     * Provides information about parameters for given job
+     *
+     * @param jobName  name of job
+     * @param jobGroup group of job
+     * @return job parameters
+     */
     public List<JobDataParameterModel> getDataParamsOfJob(String jobName, String jobGroup) {
         List<JobDataParameterModel> result = new ArrayList<>();
 
@@ -95,6 +114,13 @@ public class QuartzDataProvider {
         return result;
     }
 
+    /**
+     * Returns information about active or paused triggers for given job
+     *
+     * @param jobName  name of the job
+     * @param jobGroup group of the job
+     * @return all configured triggers for the job
+     */
     public List<TriggerModel> getTriggersOfJob(String jobName, String jobGroup) {
         List<TriggerModel> result = new ArrayList<>();
 
@@ -126,6 +152,9 @@ public class QuartzDataProvider {
         return result;
     }
 
+    /**
+     * Returns names of all known JobDetail groups
+     */
     public List<String> getJobGroupNames() {
         List<String> result = new ArrayList<>();
 
@@ -138,13 +167,16 @@ public class QuartzDataProvider {
         return result;
     }
 
+    /**
+     * Returns names of all known Trigger groups
+     */
     public List<String> getTriggerGroupNames() {
         List<String> result = new ArrayList<>();
 
         try {
             result = scheduler.getTriggerGroupNames();
         } catch (SchedulerException e) {
-            log.warn("Unable to fetch information trigger group names", e);
+            log.warn("Unable to fetch information about trigger group names", e);
         }
 
         return result;

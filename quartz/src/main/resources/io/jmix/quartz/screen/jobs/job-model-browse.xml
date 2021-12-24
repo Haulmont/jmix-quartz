@@ -48,7 +48,6 @@
                         <date format="msg://dateTimeWithSeconds"/>
                     </formatter>
                 </column>
-                <column id="isDisallowConcurrentExecution"/>
                 <column id="isActive"/>
             </columns>
             <simplePagination/>

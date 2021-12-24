@@ -16,6 +16,9 @@ import java.util.List;
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 
+/**
+ * Serves as proxy from Jmix to the Quartz engine for manipulating with jobs
+ */
 @Service("quartz_QuartzService")
 public class QuartzService {
 
@@ -24,6 +27,11 @@ public class QuartzService {
     @Autowired
     private Scheduler scheduler;
 
+    /**
+     * @param jobModel
+     * @param jobDataParameterModels
+     * @param triggerModels
+     */
     @SuppressWarnings("unchecked")
     public void updateQuartzJob(JobModel jobModel,
                                 List<JobDataParameterModel> jobDataParameterModels,
@@ -32,16 +40,7 @@ public class QuartzService {
         try {
             JobKey jobKey = JobKey.jobKey(jobModel.getJobName(), jobModel.getJobGroup());
             JobDetail existedJobDetail = scheduler.getJobDetail(jobKey);
-            JobBuilder jobBuilder;
-            if (existedJobDetail != null) {
-                jobBuilder = existedJobDetail.getJobBuilder();
-            } else {
-                Class<? extends Job> jobClass = (Class<? extends Job>) Class.forName(jobModel.getJobClass());
-                jobBuilder = JobBuilder.newJob()
-                        .withIdentity(jobModel.getJobName(), jobModel.getJobGroup())
-                        .ofType(jobClass)
-                        .storeDurably();
-            }
+            JobBuilder jobBuilder = getJobBuilder(jobModel, existedJobDetail);
 
             if (CollectionUtils.isNotEmpty(jobDataParameterModels)) {
                 jobDataParameterModels.forEach(jobDataParameterModel ->
@@ -95,6 +94,27 @@ public class QuartzService {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private JobBuilder getJobBuilder(JobModel jobModel, JobDetail existedJobDetail) throws ClassNotFoundException {
+        JobBuilder jobBuilder;
+        if (existedJobDetail != null) {
+            jobBuilder = existedJobDetail.getJobBuilder();
+        } else {
+            Class<? extends Job> jobClass = (Class<? extends Job>) Class.forName(jobModel.getJobClass());
+            jobBuilder = JobBuilder.newJob()
+                    .withIdentity(jobModel.getJobName(), jobModel.getJobGroup())
+                    .ofType(jobClass)
+                    .storeDurably();
+        }
+        return jobBuilder;
+    }
+
+    /**
+     * Delegates to the Quartz engine resuming given job. This operation makes sense only for job with paused triggers.
+     *
+     * @param jobName  name of the job
+     * @param jobGroup group of the job
+     */
     public void activateJob(String jobName, String jobGroup) {
         log.debug("activating job with name {} and group {}", jobName, jobGroup);
         try {
@@ -104,6 +124,12 @@ public class QuartzService {
         }
     }
 
+    /**
+     * Delegates to the Quartz engine pausing given job. This operation makes sense only for jobs with active triggers.
+     *
+     * @param jobName  name of the job
+     * @param jobGroup group of the job
+     */
     public void deactivateJob(String jobName, String jobGroup) {
         log.debug("deactivating job with name {} and group {}", jobName, jobGroup);
         try {
@@ -113,6 +139,12 @@ public class QuartzService {
         }
     }
 
+    /**
+     * Delegates to the Quartz engine triggering given job (executing now)
+     *
+     * @param jobName  name of the job
+     * @param jobGroup group of the job
+     */
     public void executeNow(String jobName, String jobGroup) {
         log.debug("triggering job with name {} and group {}", jobName, jobGroup);
         try {

@@ -1,8 +1,10 @@
 package io.jmix.quartz.screen.jobs;
 
+import io.jmix.core.Messages;
 import io.jmix.quartz.model.JobModel;
 import io.jmix.quartz.service.QuartzDataProvider;
 import io.jmix.quartz.service.QuartzService;
+import io.jmix.quartz.util.QuartzUtils;
 import io.jmix.ui.Notifications;
 import io.jmix.ui.action.Action;
 import io.jmix.ui.component.GroupTable;
@@ -17,13 +19,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class JobModelBrowse extends StandardLookup<JobModel> {
 
     @Autowired
-    private Notifications notifications;
-    @Autowired
     private QuartzService quartzService;
+
+    @Autowired
+    private QuartzUtils quartzUtils;
+
     @Autowired
     private QuartzDataProvider quartzDataProvider;
+
+    @Autowired
+    private Notifications notifications;
+
+    @Autowired
+    private Messages messages;
+
     @Autowired
     private CollectionContainer<JobModel> jobModelsDc;
+
     @Autowired
     private GroupTable<JobModel> jobModelsTable;
 
@@ -59,6 +71,21 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
                 && jobModelsTable.getSelected().iterator().next().getIsActive();
     }
 
+    @Install(to = "jobModelsTable.remove", subject = "enabledRule")
+    private boolean jobModelsTableRemoveEnabledRule() {
+        if (CollectionUtils.isEmpty(jobModelsTable.getSelected())) {
+            return false;
+        }
+
+        JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
+        if (selectedJobModel.getIsActive()) {
+            return false;
+        }
+
+        //it should be disabled to remove internal Jmix jobs
+        return quartzUtils.getQuartzJobClassNames().contains(selectedJobModel.getJobClass());
+    }
+
     @Subscribe("jobModelsTable.executeNow")
     public void onJobModelsTableExecuteNow(Action.ActionPerformedEvent event) {
         if (CollectionUtils.isEmpty(jobModelsTable.getSelected())) {
@@ -68,7 +95,7 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
         quartzService.executeNow(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
         notifications.create(Notifications.NotificationType.HUMANIZED)
-                .withDescription("todo executed now")
+                .withDescription(String.format(messages.getMessage(JobModelBrowse.class, "jobExecuted"), selectedJobModel.getJobName()))
                 .show();
 
         loadJobsData();
@@ -83,7 +110,7 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
         quartzService.activateJob(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
         notifications.create(Notifications.NotificationType.HUMANIZED)
-                .withDescription("todo activated")
+                .withDescription(String.format(messages.getMessage(JobModelBrowse.class, "jobActivated"), selectedJobModel.getJobName()))
                 .show();
 
         loadJobsData();
@@ -98,7 +125,7 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
         quartzService.deactivateJob(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
         notifications.create(Notifications.NotificationType.HUMANIZED)
-                .withDescription("todo deactivated")
+                .withDescription(String.format(messages.getMessage(JobModelBrowse.class, "jobDeactivated"), selectedJobModel.getJobName()))
                 .show();
 
         loadJobsData();
@@ -107,12 +134,6 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
     @Subscribe("jobModelsTable.refresh")
     public void onJobModelsTableRefresh(Action.ActionPerformedEvent event) {
         loadJobsData();
-    }
-
-    @Install(to = "jobModelsTable.remove", subject = "enabledRule")
-    private boolean jobModelsTableRemoveEnabledRule() {
-        return !CollectionUtils.isEmpty(jobModelsTable.getSelected())
-                && !jobModelsTable.getSelected().iterator().next().getIsActive();
     }
 
 }

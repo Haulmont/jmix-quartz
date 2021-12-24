@@ -6,6 +6,7 @@ import io.jmix.quartz.service.QuartzDataProvider;
 import io.jmix.quartz.service.QuartzService;
 import io.jmix.quartz.util.QuartzUtils;
 import io.jmix.ui.Notifications;
+import io.jmix.ui.RemoveOperation;
 import io.jmix.ui.action.Action;
 import io.jmix.ui.component.GroupTable;
 import io.jmix.ui.model.CollectionContainer;
@@ -32,6 +33,9 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
 
     @Autowired
     private Messages messages;
+
+    @Autowired
+    private RemoveOperation removeOperation;
 
     @Autowired
     private CollectionContainer<JobModel> jobModelsDc;
@@ -88,10 +92,6 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
 
     @Subscribe("jobModelsTable.executeNow")
     public void onJobModelsTableExecuteNow(Action.ActionPerformedEvent event) {
-        if (CollectionUtils.isEmpty(jobModelsTable.getSelected())) {
-            return;
-        }
-
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
         quartzService.executeNow(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
         notifications.create(Notifications.NotificationType.HUMANIZED)
@@ -103,10 +103,6 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
 
     @Subscribe("jobModelsTable.activate")
     public void onJobModelsTableActivate(Action.ActionPerformedEvent event) {
-        if (CollectionUtils.isEmpty(jobModelsTable.getSelected())) {
-            return;
-        }
-
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
         quartzService.activateJob(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
         notifications.create(Notifications.NotificationType.HUMANIZED)
@@ -118,10 +114,6 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
 
     @Subscribe("jobModelsTable.deactivate")
     public void onJobModelsTableDeactivate(Action.ActionPerformedEvent event) {
-        if (CollectionUtils.isEmpty(jobModelsTable.getSelected())) {
-            return;
-        }
-
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
         quartzService.deactivateJob(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
         notifications.create(Notifications.NotificationType.HUMANIZED)
@@ -129,6 +121,23 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
                 .show();
 
         loadJobsData();
+    }
+
+    @Subscribe("jobModelsTable.remove")
+    public void onJobModelsTableRemove(Action.ActionPerformedEvent event) {
+        removeOperation.builder(jobModelsTable)
+                .withConfirmation(true)
+                .beforeActionPerformed(e -> {
+                    if (CollectionUtils.isNotEmpty(e.getItems())) {
+                        JobModel jobToDelete = e.getItems().get(0);
+                        quartzService.deleteJob(jobToDelete.getJobName(), jobToDelete.getJobGroup());
+                        notifications.create(Notifications.NotificationType.HUMANIZED)
+                                .withDescription(String.format(messages.getMessage(JobModelBrowse.class, "jobDeleted"), jobToDelete.getJobName()))
+                                .show();
+                        loadJobsData();
+                    }
+                })
+                .remove();
     }
 
     @Subscribe("jobModelsTable.refresh")

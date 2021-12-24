@@ -154,4 +154,18 @@ public class QuartzService {
         }
     }
 
+    /**
+     * Delegates to the Quartz engine deleting given job
+     *
+     * @param jobName  name of the job
+     * @param jobGroup group of the job
+     */
+    public void deleteJob(String jobName, String jobGroup) {
+        log.debug("deleting job with name {} and group {}", jobName, jobGroup);
+        try {
+            scheduler.deleteJob(JobKey.jobKey(jobName, jobGroup));
+        } catch (SchedulerException e) {
+            log.warn("Unable to delete job with name {} and group {}", jobName, jobGroup, e);
+        }
+    }
 }

@@ -3,8 +3,7 @@
         caption="msg://jobModelBrowse.caption"
         focusComponent="jobModelsTable">
     <data readOnly="true">
-        <collection id="jobModelsDc"
-                    class="io.jmix.quartz.model.JobModel"/>
+        <collection id="jobModelsDc" class="io.jmix.quartz.model.JobModel"/>
     </data>
     <facets>
         <dataLoadCoordinator auto="true"/>
@@ -30,14 +29,16 @@
                 <action id="edit" type="edit"/>
                 <action id="remove" type="remove"/>
                 <action id="refresh" type="refresh"/>
-                <action id="executeNow" caption="msg://executeJobNow"/>
-                <action id="activate" caption="msg://activateJob"/>
-                <action id="deactivate" caption="msg://deactivateJob"/>
+                <action id="executeNow" caption="msg://io.jmix.quartz.screen.jobs/triggerJob" icon="PLAY_CIRCLE"/>
+                <action id="activate" caption="msg://io.jmix.quartz.screen.jobs/resumeJob" icon="PLAY"/>
+                <action id="deactivate" caption="msg://io.jmix.quartz.screen.jobs/pauseJob" icon="PAUSE"/>
             </actions>
             <columns>
                 <column id="jobName"/>
-                <column id="jobGroup"/>
+                <column id="jobGroup" collapsed="true"/>
                 <column id="jobClass"/>
+                <column id="jobState"/>
+                <column id="triggerDescription"/>
                 <column id="lastFireDate">
                     <formatter>
                         <date format="msg://dateTimeWithSeconds"/>
@@ -48,7 +49,6 @@
                         <date format="msg://dateTimeWithSeconds"/>
                     </formatter>
                 </column>
-                <column id="isActive"/>
             </columns>
             <simplePagination/>
             <buttonsPanel id="buttonsPanel"

@@ -17,12 +17,12 @@ public class JobDataParameterModel {
 
     private String value;
 
-    public String getValue() {
-        return value;
+    public UUID getId() {
+        return id;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public String getKey() {
@@ -33,11 +33,11 @@ public class JobDataParameterModel {
         this.key = key;
     }
 
-    public UUID getId() {
-        return id;
+    public String getValue() {
+        return value;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public void setValue(String value) {
+        this.value = value;
     }
 }

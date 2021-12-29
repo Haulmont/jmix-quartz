@@ -1,16 +1,14 @@
 package io.jmix.quartz.screen.trigger;
 
 import com.google.common.base.Strings;
-import io.jmix.ui.component.ComboBox;
-import io.jmix.ui.component.DateField;
-import io.jmix.ui.component.TextField;
-import io.jmix.ui.screen.*;
 import io.jmix.quartz.model.ScheduleType;
 import io.jmix.quartz.model.TriggerModel;
-import io.jmix.quartz.service.QuartzDataProvider;
+import io.jmix.quartz.service.QuartzService;
+import io.jmix.ui.component.ComboBox;
+import io.jmix.ui.component.TextField;
+import io.jmix.ui.screen.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Date;
 import java.util.List;
 
 @UiController("TriggerModel.edit")
@@ -19,17 +17,20 @@ import java.util.List;
 public class TriggerModelEdit extends StandardEditor<TriggerModel> {
 
     @Autowired
-    private QuartzDataProvider quartzDataProvider;
+    private QuartzService quartzService;
+
     @Autowired
     private ComboBox<String> triggerGroupField;
+
     @Autowired
     private TextField<String> cronExpressionField;
-    @Autowired
-    private DateField<Date> endDateField;
+
     @Autowired
     private TextField<Integer> repeatCountField;
+
     @Autowired
     private TextField<Long> repeatIntervalField;
+
     @Autowired
     private ComboBox<ScheduleType> scheduleTypeField;
 
@@ -39,12 +40,12 @@ public class TriggerModelEdit extends StandardEditor<TriggerModel> {
         initFieldVisibility();
         scheduleTypeField.addValueChangeListener(e -> initFieldVisibility());
         if (getEditedEntity().getScheduleType() == null) {
-            scheduleTypeField.setValue(ScheduleType.SIMPLE);
+            scheduleTypeField.setValue(ScheduleType.CRON_EXPRESSION);
         }
     }
 
     private void initTriggerGroupNames() {
-        List<String> triggerGroupNames = quartzDataProvider.getTriggerGroupNames();
+        List<String> triggerGroupNames = quartzService.getTriggerGroupNames();
         triggerGroupField.setOptionsList(triggerGroupNames);
         triggerGroupField.setEnterPressHandler(enterPressEvent -> {
             String newTriggerGroupName = enterPressEvent.getText();
@@ -60,7 +61,6 @@ public class TriggerModelEdit extends StandardEditor<TriggerModel> {
         cronExpressionField.setVisible(!isSimpleTrigger);
         repeatCountField.setVisible(isSimpleTrigger);
         repeatIntervalField.setVisible(isSimpleTrigger);
-        endDateField.setVisible(isSimpleTrigger);
     }
 
 }

@@ -21,7 +21,7 @@ public class QuartzUtils {
     private List<String> quartzJobClassNames;
 
     /**
-     * Returns names of classes implementing {@code org.quartz.Job} interface
+     * Returns FQN of classes implementing {@code org.quartz.Job} interface
      */
     public List<String> getQuartzJobClassNames() {
         if (CollectionUtils.isEmpty(quartzJobClassNames)) {

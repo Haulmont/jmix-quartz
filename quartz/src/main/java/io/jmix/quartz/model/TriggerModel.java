@@ -3,7 +3,9 @@ package io.jmix.quartz.model;
 import io.jmix.core.entity.annotation.JmixGeneratedValue;
 import io.jmix.core.entity.annotation.JmixId;
 import io.jmix.core.metamodel.annotation.JmixEntity;
+import io.jmix.core.metamodel.annotation.JmixProperty;
 
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.UUID;
@@ -37,14 +39,6 @@ public class TriggerModel {
 
     private Long repeatInterval;
 
-    public void setScheduleType(ScheduleType scheduleType) {
-        this.scheduleType = scheduleType;
-    }
-
-    public ScheduleType getScheduleType() {
-        return scheduleType;
-    }
-
     public UUID getId() {
         return id;
     }
@@ -67,6 +61,14 @@ public class TriggerModel {
 
     public void setTriggerGroup(String triggerGroup) {
         this.triggerGroup = triggerGroup;
+    }
+
+    public void setScheduleType(ScheduleType scheduleType) {
+        this.scheduleType = scheduleType;
+    }
+
+    public ScheduleType getScheduleType() {
+        return scheduleType;
     }
 
     public Date getStartDate() {
@@ -124,4 +126,13 @@ public class TriggerModel {
     public void setRepeatInterval(Long repeatInterval) {
         this.repeatInterval = repeatInterval;
     }
+
+    @Transient
+    @JmixProperty
+    public String getScheduleDescription() {
+        return getScheduleType() == ScheduleType.SIMPLE
+                ? String.format("Repeat %s times every %s seconds", repeatCount, repeatInterval / 1000)
+                : cronExpression;
+    }
+
 }

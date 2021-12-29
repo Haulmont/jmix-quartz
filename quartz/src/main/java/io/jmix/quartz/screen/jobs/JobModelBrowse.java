@@ -2,7 +2,7 @@ package io.jmix.quartz.screen.jobs;
 
 import io.jmix.core.Messages;
 import io.jmix.quartz.model.JobModel;
-import io.jmix.quartz.service.QuartzDataProvider;
+import io.jmix.quartz.model.JobState;
 import io.jmix.quartz.service.QuartzService;
 import io.jmix.quartz.util.QuartzUtils;
 import io.jmix.ui.Notifications;
@@ -14,6 +14,10 @@ import io.jmix.ui.screen.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @UiController("JobModel.browse")
 @UiDescriptor("job-model-browse.xml")
 @LookupComponent("jobModelsTable")
@@ -24,9 +28,6 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
 
     @Autowired
     private QuartzUtils quartzUtils;
-
-    @Autowired
-    private QuartzDataProvider quartzDataProvider;
 
     @Autowired
     private Notifications notifications;
@@ -49,13 +50,19 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
     }
 
     private void loadJobsData() {
-        jobModelsDc.setItems(quartzDataProvider.getAllJobs());
+        List<JobModel> sortedJobs = quartzService.getAllJobs().stream()
+                .sorted(
+                        Comparator.comparing(JobModel::getJobState)
+                                .thenComparing(JobModel::getJobName))
+                .collect(Collectors.toList());
+
+        jobModelsDc.setItems(sortedJobs);
     }
 
     @Install(to = "jobModelsTable.executeNow", subject = "enabledRule")
     private boolean jobModelsTableExecuteNowEnabledRule() {
         return !CollectionUtils.isEmpty(jobModelsTable.getSelected())
-                && !jobModelsTable.getSelected().iterator().next().getIsActive();
+                && !isJobActive(jobModelsTable.getSelected().iterator().next());
     }
 
     @Install(to = "jobModelsTable.activate", subject = "enabledRule")
@@ -65,14 +72,13 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
         }
 
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
-        return !selectedJobModel.getIsActive()
-                && CollectionUtils.isNotEmpty(quartzDataProvider.getTriggersOfJob(selectedJobModel.getJobName(), selectedJobModel.getJobGroup()));
+        return !isJobActive(selectedJobModel) && CollectionUtils.isNotEmpty(selectedJobModel.getTriggers());
     }
 
     @Install(to = "jobModelsTable.deactivate", subject = "enabledRule")
     private boolean jobModelsTableDeactivateEnabledRule() {
         return !CollectionUtils.isEmpty(jobModelsTable.getSelected())
-                && jobModelsTable.getSelected().iterator().next().getIsActive();
+                && isJobActive(jobModelsTable.getSelected().iterator().next());
     }
 
     @Install(to = "jobModelsTable.remove", subject = "enabledRule")
@@ -82,7 +88,7 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
         }
 
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
-        if (selectedJobModel.getIsActive()) {
+        if (isJobActive(selectedJobModel)) {
             return false;
         }
 
@@ -104,9 +110,9 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
     @Subscribe("jobModelsTable.activate")
     public void onJobModelsTableActivate(Action.ActionPerformedEvent event) {
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
-        quartzService.activateJob(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
+        quartzService.resumeJob(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
         notifications.create(Notifications.NotificationType.HUMANIZED)
-                .withDescription(String.format(messages.getMessage(JobModelBrowse.class, "jobActivated"), selectedJobModel.getJobName()))
+                .withDescription(String.format(messages.getMessage(JobModelBrowse.class, "jobResumed"), selectedJobModel.getJobName()))
                 .show();
 
         loadJobsData();
@@ -115,9 +121,9 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
     @Subscribe("jobModelsTable.deactivate")
     public void onJobModelsTableDeactivate(Action.ActionPerformedEvent event) {
         JobModel selectedJobModel = jobModelsTable.getSelected().iterator().next();
-        quartzService.deactivateJob(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
+        quartzService.pauseJob(selectedJobModel.getJobName(), selectedJobModel.getJobGroup());
         notifications.create(Notifications.NotificationType.HUMANIZED)
-                .withDescription(String.format(messages.getMessage(JobModelBrowse.class, "jobDeactivated"), selectedJobModel.getJobName()))
+                .withDescription(String.format(messages.getMessage(JobModelBrowse.class, "jobPaused"), selectedJobModel.getJobName()))
                 .show();
 
         loadJobsData();
@@ -143,6 +149,17 @@ public class JobModelBrowse extends StandardLookup<JobModel> {
     @Subscribe("jobModelsTable.refresh")
     public void onJobModelsTableRefresh(Action.ActionPerformedEvent event) {
         loadJobsData();
+    }
+
+    @Install(to = "jobModelsTable.edit", subject = "afterCloseHandler")
+    private void jobModelsTableEditAfterCloseHandler(AfterCloseEvent event) {
+        if (event.closedWith(StandardOutcome.COMMIT)) {
+            loadJobsData();
+        }
+    }
+
+    private boolean isJobActive(JobModel jobModel) {
+        return jobModel != null && jobModel.getJobState() == JobState.NORMAL;
     }
 
 }

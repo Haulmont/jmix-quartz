@@ -3,10 +3,10 @@
         caption="msg://jobModelEdit.caption"
         focusComponent="form">
     <data>
-        <instance id="jobModelDc"
-                  class="io.jmix.quartz.model.JobModel"/>
-        <collection id="jobDataParamsDc" class="io.jmix.quartz.model.JobDataParameterModel"/>
-        <collection id="triggerModelDc" class="io.jmix.quartz.model.TriggerModel"/>
+        <instance id="jobModelDc" class="io.jmix.quartz.model.JobModel">
+            <collection id="triggerModelDc" property="triggers"/>
+            <collection id="jobDataParamsDc" property="jobDataParameters"/>
+        </instance>
     </data>
     <facets>
         <dataLoadCoordinator auto="true"/>
@@ -35,7 +35,7 @@
         <tabSheet id="jobDetailsTabSheet">
             <tab id="triggersTabSheet" caption="msg://triggersTabCaption" spacing="true"
                  margin="true;false;false;false;">
-                <table id="triggerModelGroupTable" dataContainer="triggerModelDc" height="100%" width="100%">
+                <groupTable id="triggerModelTable" dataContainer="triggerModelDc" height="100%" width="100%">
                     <actions>
                         <action id="create" type="create">
                             <properties>
@@ -43,12 +43,14 @@
                             </properties>
                         </action>
                         <action id="edit" type="edit"/>
+                        <action id="view" type="view"/>
                         <action id="remove" type="remove"/>
                     </actions>
                     <columns>
                         <column id="triggerName"/>
-                        <column id="triggerGroup"/>
+                        <column id="triggerGroup" collapsed="true"/>
                         <column id="scheduleType"/>
+                        <column id="scheduleDescription"/>
                         <column id="startDate">
                             <formatter>
                                 <date format="msg://dateTimeWithSeconds"/>
@@ -66,15 +68,16 @@
                         </column>
                     </columns>
                     <buttonsPanel>
-                        <button action="triggerModelGroupTable.create"/>
-                        <button action="triggerModelGroupTable.edit"/>
-                        <button action="triggerModelGroupTable.remove"/>
+                        <button action="triggerModelTable.create"/>
+                        <button action="triggerModelTable.edit"/>
+                        <button action="triggerModelTable.view"/>
+                        <button action="triggerModelTable.remove"/>
                     </buttonsPanel>
-                </table>
+                </groupTable>
             </tab>
             <tab id="jobDataParamsSheet" caption="msg://jobDataParamsTabCaption" spacing="true"
                  margin="true;false;false;false;">
-                <table id="jobDataParamsTable" dataContainer="jobDataParamsDc" height="100%" width="100%">
+                <groupTable id="jobDataParamsTable" dataContainer="jobDataParamsDc" height="100%" width="100%">
                     <actions>
                         <action id="create" type="create">
                             <properties>
@@ -93,7 +96,7 @@
                         <button action="jobDataParamsTable.edit"/>
                         <button action="jobDataParamsTable.remove"/>
                     </buttonsPanel>
-                </table>
+                </groupTable>
             </tab>
         </tabSheet>
 

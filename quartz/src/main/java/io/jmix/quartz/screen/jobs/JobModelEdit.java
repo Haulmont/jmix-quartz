@@ -7,7 +7,7 @@ import io.jmix.quartz.model.JobState;
 import io.jmix.quartz.model.TriggerModel;
 import io.jmix.quartz.screen.trigger.TriggerModelEdit;
 import io.jmix.quartz.service.QuartzService;
-import io.jmix.quartz.util.QuartzUtils;
+import io.jmix.quartz.util.QuartzJobClassFinder;
 import io.jmix.ui.ScreenBuilders;
 import io.jmix.ui.action.Action;
 import io.jmix.ui.action.list.EditAction;
@@ -31,7 +31,7 @@ public class JobModelEdit extends StandardEditor<JobModel> {
     private QuartzService quartzService;
 
     @Autowired
-    protected QuartzUtils quartzUtils;
+    protected QuartzJobClassFinder quartzJobClassFinder;
 
     @Autowired
     private ScreenBuilders screenBuilders;
@@ -109,7 +109,7 @@ public class JobModelEdit extends StandardEditor<JobModel> {
             }
         });
 
-        List<String> existedJobsClassNames = quartzUtils.getQuartzJobClassNames();
+        List<String> existedJobsClassNames = quartzJobClassFinder.getQuartzJobClassNames();
         jobClassField.setOptionsList(existedJobsClassNames);
         String jobClass = getEditedEntity().getJobClass();
         //name, group and class for internal Jmix job should not be editable

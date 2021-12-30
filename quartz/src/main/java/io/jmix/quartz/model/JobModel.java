@@ -31,7 +31,7 @@ public class JobModel {
 
     private JobState jobState;
 
-    private List<TriggerModel> triggers;
+    private List<TriggerModel> triggers = new ArrayList<>();
 
     private List<JobDataParameterModel> jobDataParameters = new ArrayList<>();
 

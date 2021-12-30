@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Component("quartz_QuartzUtils")
-public class QuartzUtils {
+@Component("quartz_QuartzJobClassFinder")
+public class QuartzJobClassFinder {
 
     @Autowired
     private JmixModulesClasspathScanner classpathScanner;

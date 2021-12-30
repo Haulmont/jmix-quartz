@@ -21,12 +21,17 @@ group = 'io.jmix.quartz'
 archivesBaseName = 'jmix-quartz'
 
 dependencies {
+    api 'io.jmix.core:jmix-core'
     api 'io.jmix.data:jmix-data'
     api 'io.jmix.ui:jmix-ui'
 
-    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+    api 'org.springframework.boot:spring-boot-starter-quartz'
 
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework:spring-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-quartz'
+    testImplementation 'io.jmix.data:jmix-eclipselink'
+    testImplementation 'org.liquibase:liquibase-core'
     testImplementation 'org.junit.jupiter:junit-jupiter-api'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testRuntimeOnly 'org.hsqldb:hsqldb'
